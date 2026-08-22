@@ -16,9 +16,9 @@ export async function insertWishlistBook(book: Omit<WishlistBook, 'id'>): Promis
     [
       book.title,
       book.author,
-      book.publication,
-      book.expectedPrice,
-      book.notes,
+      book.publication || '',
+      book.expectedPrice || 0,
+      book.notes || '',
       book.addedDate,
     ]
   );
@@ -46,14 +46,14 @@ export async function moveWishlistToBooks(wishlistId: number): Promise<number> {
     [
       wishlistBook.title,
       wishlistBook.author,
-      wishlistBook.publication,
-      wishlistBook.expectedPrice,
-      wishlistBook.expectedPrice,
+      wishlistBook.publication || '',
+      wishlistBook.expectedPrice || 0,
+      wishlistBook.expectedPrice || 0,
       now,
-      null,
-      null,
+      '',
+      '',
       0,
-      null,
+      '',
       0,
       now,
     ]

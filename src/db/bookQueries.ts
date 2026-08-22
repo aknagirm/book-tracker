@@ -1,6 +1,12 @@
 import { getDatabase } from './database';
 import { Book } from '../types';
 
+// expo-sqlite on Android throws NullPointerException for null params
+// Convert null to empty string for text fields, 0 for numeric fields
+function sanitize(value: string | null): string {
+  return value ?? '';
+}
+
 export async function getAllBooks(): Promise<Book[]> {
   const db = await getDatabase();
   const results = await db.getAllAsync<Book>(
@@ -9,6 +15,10 @@ export async function getAllBooks(): Promise<Book[]> {
   return results.map(row => ({
     ...row,
     isSold: Boolean(row.isSold),
+    purchasedDate: row.purchasedDate || null,
+    readingStartDate: row.readingStartDate || null,
+    completionDate: row.completionDate || null,
+    soldDate: row.soldDate || null,
   }));
 }
 
@@ -19,7 +29,14 @@ export async function getBookById(id: number): Promise<Book | null> {
     [id]
   );
   if (!result) return null;
-  return { ...result, isSold: Boolean(result.isSold) };
+  return {
+    ...result,
+    isSold: Boolean(result.isSold),
+    purchasedDate: result.purchasedDate || null,
+    readingStartDate: result.readingStartDate || null,
+    completionDate: result.completionDate || null,
+    soldDate: result.soldDate || null,
+  };
 }
 
 export async function insertBook(book: Omit<Book, 'id'>): Promise<number> {
@@ -30,15 +47,15 @@ export async function insertBook(book: Omit<Book, 'id'>): Promise<number> {
     [
       book.title,
       book.author,
-      book.publication,
-      book.actualPrice,
-      book.discountedPrice,
-      book.purchasedDate,
-      book.readingStartDate,
-      book.completionDate,
+      book.publication || '',
+      book.actualPrice || 0,
+      book.discountedPrice || 0,
+      sanitize(book.purchasedDate),
+      sanitize(book.readingStartDate),
+      sanitize(book.completionDate),
       book.isSold ? 1 : 0,
-      book.soldDate,
-      book.soldPrice,
+      sanitize(book.soldDate),
+      book.soldPrice || 0,
       book.createdAt,
     ]
   );
@@ -53,15 +70,15 @@ export async function updateBook(book: Book): Promise<void> {
     [
       book.title,
       book.author,
-      book.publication,
-      book.actualPrice,
-      book.discountedPrice,
-      book.purchasedDate,
-      book.readingStartDate,
-      book.completionDate,
+      book.publication || '',
+      book.actualPrice || 0,
+      book.discountedPrice || 0,
+      sanitize(book.purchasedDate),
+      sanitize(book.readingStartDate),
+      sanitize(book.completionDate),
       book.isSold ? 1 : 0,
-      book.soldDate,
-      book.soldPrice,
+      sanitize(book.soldDate),
+      book.soldPrice || 0,
       book.id,
     ]
   );
@@ -88,7 +105,14 @@ export async function getBooksByYear(year: number): Promise<Book[]> {
     `SELECT * FROM books WHERE purchasedDate BETWEEN ? AND ? ORDER BY purchasedDate ASC`,
     [startDate, endDate]
   );
-  return results.map(row => ({ ...row, isSold: Boolean(row.isSold) }));
+  return results.map(row => ({
+    ...row,
+    isSold: Boolean(row.isSold),
+    purchasedDate: row.purchasedDate || null,
+    readingStartDate: row.readingStartDate || null,
+    completionDate: row.completionDate || null,
+    soldDate: row.soldDate || null,
+  }));
 }
 
 export async function getPurchasedStats(): Promise<{ year: number; month: number; count: number; totalSpent: number }[]> {
@@ -100,7 +124,7 @@ export async function getPurchasedStats(): Promise<{ year: number; month: number
       COUNT(*) as count,
       SUM(COALESCE(discountedPrice, actualPrice)) as totalSpent
     FROM books 
-    WHERE purchasedDate IS NOT NULL
+    WHERE purchasedDate IS NOT NULL AND purchasedDate != ''
     GROUP BY year, month
     ORDER BY year DESC, month DESC`
   );
@@ -114,7 +138,7 @@ export async function getCompletedStats(): Promise<{ year: number; month: number
       CAST(strftime('%m', completionDate) AS INTEGER) as month,
       COUNT(*) as count
     FROM books 
-    WHERE completionDate IS NOT NULL
+    WHERE completionDate IS NOT NULL AND completionDate != ''
     GROUP BY year, month
     ORDER BY year DESC, month DESC`
   );
