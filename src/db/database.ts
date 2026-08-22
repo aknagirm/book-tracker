@@ -6,10 +6,15 @@ let db: SQLite.SQLiteDatabase | null = null;
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (db) return db;
 
-  db = await SQLite.openDatabaseAsync('booktracker.db');
-
-  await db.execAsync(CREATE_BOOKS_TABLE);
-  await db.execAsync(CREATE_WISHLIST_TABLE);
+  try {
+    db = await SQLite.openDatabaseAsync('booktracker.db');
+    await db.execAsync(CREATE_BOOKS_TABLE);
+    await db.execAsync(CREATE_WISHLIST_TABLE);
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    db = null;
+    throw error;
+  }
 
   return db;
 }

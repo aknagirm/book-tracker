@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { PaperProvider, MD3LightTheme } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
+import { enableScreens } from 'react-native-screens';
+
+enableScreens(true);
 
 const theme = {
   ...MD3LightTheme,
@@ -20,7 +23,11 @@ export default function RootLayout() {
   return (
     <PaperProvider theme={theme}>
       <StatusBar style="auto" />
-      <Stack>
+      <Stack
+        screenOptions={{
+          animation: 'none',
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="book/add" options={{ headerShown: false }} />
         <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
