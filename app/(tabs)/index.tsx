@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import { Searchbar, FAB, SegmentedButtons, IconButton, Appbar } from 'react-native-paper';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, FlatList, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
+import { Searchbar, FAB, Appbar, Text } from 'react-native-paper';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { BookCard } from '../../src/components/BookCard';
 import { EmptyState } from '../../src/components/EmptyState';
@@ -8,12 +8,28 @@ import { useBooks } from '../../src/hooks/useBooks';
 
 type Filter = 'purchased' | 'reading' | 'completed' | 'sold';
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export default function BookListScreen() {
   const { books, loading, refresh } = useBooks();
   const [search, setSearch] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
   const [filter, setFilter] = useState<Filter>('purchased');
+  const [filterWidth, setFilterWidth] = useState(0);
+  const markerPosition = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const filterIndex = ['purchased', 'reading', 'completed', 'sold'].indexOf(filter);
+
+  useEffect(() => {
+    if (!filterWidth) return;
+    Animated.timing(markerPosition, {
+      toValue: filterIndex * (filterWidth / 4),
+      duration: 280,
+      useNativeDriver: true,
+    }).start();
+  }, [filterIndex, filterWidth, markerPosition]);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,6 +68,18 @@ export default function BookListScreen() {
     setSearch('');
   };
 
+  const handleFilterChange = (nextFilter: Filter) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFilter(nextFilter);
+  };
+
+  const bookCounts = {
+    purchased: books.filter((book) => !book.readingStartDate && !book.completionDate && !book.isSold).length,
+    reading: books.filter((book) => book.readingStartDate && !book.completionDate && !book.isSold).length,
+    completed: books.filter((book) => book.completionDate && !book.isSold).length,
+    sold: books.filter((book) => book.isSold).length,
+  };
+
   return (
     <View style={styles.container}>
       <Appbar.Header>
@@ -74,17 +102,40 @@ export default function BookListScreen() {
         />
       )}
 
-      <SegmentedButtons
-        value={filter}
-        onValueChange={(value) => setFilter(value as Filter)}
-        buttons={[
-          { value: 'purchased', label: 'Purchased' },
-          { value: 'reading', label: 'Reading' },
-          { value: 'completed', label: 'Done' },
-          { value: 'sold', label: 'Sold' },
-        ]}
+      <View
         style={styles.filters}
-      />
+        onLayout={(event) => setFilterWidth(event.nativeEvent.layout.width)}
+      >
+        {[
+          { value: 'purchased', label: 'Owned', count: bookCounts.purchased },
+          { value: 'reading', label: 'Reading', count: bookCounts.reading },
+          { value: 'completed', label: 'Done', count: bookCounts.completed },
+          { value: 'sold', label: 'Sold', count: bookCounts.sold },
+        ].map((button) => {
+          const selected = filter === button.value;
+          return (
+            <Pressable
+              key={button.value}
+              onPress={() => handleFilterChange(button.value as Filter)}
+              style={styles.filterButton}
+            >
+              <Text style={[styles.filterText, selected && styles.selectedFilterText]}>
+                {button.label} ({button.count})
+              </Text>
+            </Pressable>
+          );
+        })}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.selectedFilterButton,
+            {
+              width: filterWidth / 4,
+              transform: [{ translateX: markerPosition }],
+            },
+          ]}
+        />
+      </View>
       <FlatList
         data={filteredBooks}
         keyExtractor={(item) => item.id.toString()}
@@ -124,8 +175,39 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   filters: {
-    marginHorizontal: 16,
+    flexDirection: 'row',
+    marginHorizontal: 4,
     marginBottom: 8,
+    backgroundColor: '#ffffff',
+    borderColor: '#6750A4',
+    borderRadius: 6,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  filterButton: {
+    flex: 1,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    backgroundColor: 'transparent',
+    zIndex: 1,
+  },
+  selectedFilterButton: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: '#6750A4',
+    zIndex: 0,
+  },
+  filterText: {
+    color: '#6750A4',
+    fontSize: 13,
+  },
+  selectedFilterText: {
+    color: '#ffffff',
+    fontWeight: '600',
   },
   list: {
     paddingBottom: 80,

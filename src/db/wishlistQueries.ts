@@ -1,5 +1,6 @@
 import { getDatabase } from './database';
 import { WishlistBook } from '../types';
+import { notifyWishlistChanged } from './wishlistEvents';
 
 export async function getAllWishlistBooks(): Promise<WishlistBook[]> {
   const db = await getDatabase();
@@ -23,15 +24,22 @@ export async function insertWishlistBook(book: Omit<WishlistBook, 'id'>): Promis
       book.addedDate,
     ]
   );
+  notifyWishlistChanged();
   return result.lastInsertRowId;
 }
 
 export async function deleteWishlistBook(id: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync('DELETE FROM wishlist WHERE id = ?', [id]);
+  notifyWishlistChanged();
 }
 
-export async function moveWishlistToBooks(wishlistId: number): Promise<number> {
+export async function moveWishlistToBooks(
+  wishlistId: number,
+  purchasedDate: string,
+  actualPrice: number,
+  discountedPrice: number
+): Promise<number> {
   const db = await getDatabase();
   const wishlistBook = await db.getFirstAsync<WishlistBook>(
     'SELECT * FROM wishlist WHERE id = ?',
@@ -49,9 +57,9 @@ export async function moveWishlistToBooks(wishlistId: number): Promise<number> {
       wishlistBook.title,
       wishlistBook.author,
       wishlistBook.publication || '',
-      wishlistBook.expectedPrice || 0,
-      wishlistBook.expectedPrice || 0,
-      now,
+      actualPrice,
+      discountedPrice,
+      purchasedDate,
       '',
       '',
       0,
@@ -62,6 +70,7 @@ export async function moveWishlistToBooks(wishlistId: number): Promise<number> {
   );
 
   await db.runAsync('DELETE FROM wishlist WHERE id = ?', [wishlistId]);
+  notifyWishlistChanged();
   return result.lastInsertRowId;
 }
 
@@ -83,4 +92,5 @@ export async function insertWishlistBooksInBulk(books: Omit<WishlistBook, 'id'>[
       );
     }
   });
+  notifyWishlistChanged();
 }

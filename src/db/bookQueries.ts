@@ -100,6 +100,22 @@ export async function sellBook(id: number, soldDate: string, soldPrice: number):
   );
 }
 
+export async function startReading(id: number, readingStartDate: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    'UPDATE books SET readingStartDate = ? WHERE id = ?',
+    [readingStartDate, id]
+  );
+}
+
+export async function completeReading(id: number, completionDate: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    'UPDATE books SET completionDate = ? WHERE id = ?',
+    [completionDate, id]
+  );
+}
+
 export async function getBooksByYear(year: number): Promise<Book[]> {
   const db = await getDatabase();
   const startDate = `${year}-01-01`;

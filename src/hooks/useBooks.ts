@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Book } from '../types';
-import { getAllBooks, getBookById, insertBook, updateBook, deleteBook, sellBook } from '../db/bookQueries';
+import { getAllBooks, getBookById, insertBook, updateBook, deleteBook, sellBook, startReading, completeReading } from '../db/bookQueries';
 
 export function useBooks() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -42,6 +42,16 @@ export function useBooks() {
     await loadBooks();
   };
 
+  const markAsReading = async (id: number, readingStartDate: string) => {
+    await startReading(id, readingStartDate);
+    await loadBooks();
+  };
+
+  const markAsCompleted = async (id: number, completionDate: string) => {
+    await completeReading(id, completionDate);
+    await loadBooks();
+  };
+
   return {
     books,
     loading,
@@ -50,6 +60,8 @@ export function useBooks() {
     editBook,
     removeBook,
     markAsSold,
+    markAsReading,
+    markAsCompleted,
   };
 }
 

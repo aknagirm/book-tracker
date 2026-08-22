@@ -9,16 +9,20 @@ export default function BookDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { book, loading, refresh } = useBook(Number(id));
-  const { removeBook, markAsSold } = useBooks();
+  const { removeBook, markAsSold, markAsReading, markAsCompleted } = useBooks();
 
   const [sellDialogVisible, setSellDialogVisible] = useState(false);
   const [soldDate, setSoldDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
   const [soldPrice, setSoldPrice] = useState('');
+  const [readingDialogVisible, setReadingDialogVisible] = useState(false);
+  const [readingStartDate, setReadingStartDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
+  const [completionDialogVisible, setCompletionDialogVisible] = useState(false);
+  const [completionDate, setCompletionDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [])
+    }, [refresh])
   );
 
   const handleDelete = () => {
@@ -44,6 +48,20 @@ export default function BookDetailScreen() {
     await markAsSold(Number(id), soldDate, parseFloat(soldPrice));
     setSellDialogVisible(false);
     refresh();
+  };
+
+  const handleStartReading = async () => {
+    if (!readingStartDate) return;
+    await markAsReading(Number(id), readingStartDate);
+    setReadingDialogVisible(false);
+    await refresh();
+  };
+
+  const handleComplete = async () => {
+    if (!completionDate) return;
+    await markAsCompleted(Number(id), completionDate);
+    setCompletionDialogVisible(false);
+    await refresh();
   };
 
   if (loading || !book) {
@@ -82,7 +100,11 @@ export default function BookDetailScreen() {
           <Card.Content>
             {book.coverUri ? (
               <Image source={{ uri: book.coverUri }} style={styles.cover} />
-            ) : null}
+            ) : (
+              <View style={[styles.cover, styles.coverPlaceholder]}>
+                <Text variant="bodyMedium" style={styles.placeholderText}>No Image</Text>
+              </View>
+            )}
             <View style={styles.titleRow}>
               <Text variant="headlineSmall" style={styles.title}>
                 {book.title}
@@ -176,18 +198,68 @@ export default function BookDetailScreen() {
         )}
 
         {!book.isSold && (
-          <Button
-            mode="outlined"
-            icon="tag"
-            onPress={() => setSellDialogVisible(true)}
-            style={styles.sellButton}
-          >
-            Mark as Sold
-          </Button>
+          <View>
+            {!book.readingStartDate && (
+              <Button
+                mode="outlined"
+                icon="book-open-page-variant"
+                onPress={() => setReadingDialogVisible(true)}
+                style={styles.actionButton}
+              >
+                Start Reading
+              </Button>
+            )}
+            {book.readingStartDate && !book.completionDate && (
+              <Button
+                mode="outlined"
+                icon="check-circle-outline"
+                onPress={() => setCompletionDialogVisible(true)}
+                style={styles.actionButton}
+              >
+                Mark as Completed
+              </Button>
+            )}
+            <Button
+              mode="outlined"
+              icon="tag"
+              onPress={() => setSellDialogVisible(true)}
+              style={styles.actionButton}
+            >
+              Mark as Sold
+            </Button>
+          </View>
         )}
       </ScrollView>
 
       <Portal>
+        <Dialog visible={completionDialogVisible} onDismiss={() => setCompletionDialogVisible(false)}>
+          <Dialog.Title>Complete Book</Dialog.Title>
+          <Dialog.Content>
+            <DatePickerInput
+              label="Completion Date"
+              value={completionDate}
+              onChange={setCompletionDate}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setCompletionDialogVisible(false)}>Cancel</Button>
+            <Button onPress={handleComplete} disabled={!completionDate}>Mark as Completed</Button>
+          </Dialog.Actions>
+        </Dialog>
+        <Dialog visible={readingDialogVisible} onDismiss={() => setReadingDialogVisible(false)}>
+          <Dialog.Title>Start Reading</Dialog.Title>
+          <Dialog.Content>
+            <DatePickerInput
+              label="Reading Start Date"
+              value={readingStartDate}
+              onChange={setReadingStartDate}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setReadingDialogVisible(false)}>Cancel</Button>
+            <Button onPress={handleStartReading} disabled={!readingStartDate}>Start</Button>
+          </Dialog.Actions>
+        </Dialog>
         <Dialog visible={sellDialogVisible} onDismiss={() => setSellDialogVisible(false)}>
           <Dialog.Title>Sell Book</Dialog.Title>
           <Dialog.Content>
@@ -251,6 +323,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 16,
   },
+  coverPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eeeeee',
+    borderColor: '#d5d5d5',
+    borderWidth: 1,
+  },
+  placeholderText: {
+    color: '#757575',
+  },
   author: {
     marginTop: 4,
     color: '#616161',
@@ -274,7 +356,7 @@ const styles = StyleSheet.create({
   value: {
     fontWeight: '500',
   },
-  sellButton: {
+  actionButton: {
     marginVertical: 16,
   },
 });

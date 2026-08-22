@@ -1,19 +1,29 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, Alert } from 'react-native';
-import { Card, Text, FAB, IconButton } from 'react-native-paper';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { Card, Text, FAB, IconButton, Button, Dialog, Portal, TextInput } from 'react-native-paper';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { useWishlist } from '../../src/hooks/useWishlist';
 import { EmptyState } from '../../src/components/EmptyState';
 import { WishlistBook } from '../../src/types';
+import { DatePickerInput } from '../../src/components/DatePickerInput';
 
 export default function WishlistScreen() {
   const { wishlist, loading, refresh, removeFromWishlist, moveToPurchased } = useWishlist();
   const router = useRouter();
+  const navigation = useNavigation();
+  const [purchaseItem, setPurchaseItem] = useState<WishlistBook | null>(null);
+  const [purchasedDate, setPurchasedDate] = useState<string | null>(new Date().toISOString().split('T')[0]);
+  const [actualPrice, setActualPrice] = useState('');
+  const [discountedPrice, setDiscountedPrice] = useState('');
+
+  useEffect(() => {
+    navigation.setOptions({ title: `Wishlist (${wishlist.length})` });
+  }, [navigation, wishlist.length]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [])
+    }, [refresh])
   );
 
   const handleRemove = (item: WishlistBook) => {
@@ -32,20 +42,22 @@ export default function WishlistScreen() {
   };
 
   const handleMoveToPurchased = (item: WishlistBook) => {
-    Alert.alert(
-      'Mark as Purchased',
-      `Move "${item.title}" to your book collection?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Yes, Purchased',
-          onPress: async () => {
-            await moveToPurchased(item.id);
-            refresh();
-          },
-        },
-      ]
+    setPurchaseItem(item);
+    setPurchasedDate(new Date().toISOString().split('T')[0]);
+    setActualPrice(item.expectedPrice > 0 ? item.expectedPrice.toString() : '');
+    setDiscountedPrice('');
+  };
+
+  const confirmPurchase = async () => {
+    if (!purchaseItem || !purchasedDate) return;
+    await moveToPurchased(
+      purchaseItem.id,
+      purchasedDate,
+      parseFloat(actualPrice) || 0,
+      parseFloat(discountedPrice) || 0
     );
+    setPurchaseItem(null);
+    refresh();
   };
 
   const renderItem = ({ item }: { item: WishlistBook }) => (
@@ -112,6 +124,34 @@ export default function WishlistScreen() {
         style={styles.fab}
         onPress={() => router.push('/wishlist/add')}
       />
+      <Portal>
+        <Dialog visible={purchaseItem !== null} onDismiss={() => setPurchaseItem(null)}>
+          <Dialog.Title>Purchase Book</Dialog.Title>
+          <Dialog.Content>
+            <DatePickerInput label="Purchase Date" value={purchasedDate} onChange={setPurchasedDate} />
+            <TextInput
+              label="Actual Price (₹)"
+              value={actualPrice}
+              onChangeText={setActualPrice}
+              keyboardType="numeric"
+              mode="outlined"
+              style={styles.dialogInput}
+            />
+            <TextInput
+              label="Discounted Price (₹)"
+              value={discountedPrice}
+              onChangeText={setDiscountedPrice}
+              keyboardType="numeric"
+              mode="outlined"
+              style={styles.dialogInput}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setPurchaseItem(null)}>Cancel</Button>
+            <Button onPress={confirmPurchase} disabled={!purchasedDate}>Purchase</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
@@ -154,6 +194,10 @@ const styles = StyleSheet.create({
     color: '#757575',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  dialogInput: {
+    marginBottom: 10,
+    backgroundColor: 'white',
   },
   actions: {
     flexDirection: 'column',

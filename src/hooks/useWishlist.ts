@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WishlistBook } from '../types';
 import { getAllWishlistBooks, insertWishlistBook, deleteWishlistBook, moveWishlistToBooks } from '../db/wishlistQueries';
+import { subscribeToWishlistChanges } from '../db/wishlistEvents';
 
 export function useWishlist() {
   const [wishlist, setWishlist] = useState<WishlistBook[]>([]);
@@ -20,6 +21,7 @@ export function useWishlist() {
 
   useEffect(() => {
     loadWishlist();
+    return subscribeToWishlistChanges(loadWishlist);
   }, [loadWishlist]);
 
   const addToWishlist = async (book: Omit<WishlistBook, 'id'>) => {
@@ -32,8 +34,13 @@ export function useWishlist() {
     await loadWishlist();
   };
 
-  const moveToPurchased = async (id: number) => {
-    await moveWishlistToBooks(id);
+  const moveToPurchased = async (
+    id: number,
+    purchasedDate: string,
+    actualPrice: number,
+    discountedPrice: number
+  ) => {
+    await moveWishlistToBooks(id, purchasedDate, actualPrice, discountedPrice);
     await loadWishlist();
   };
 

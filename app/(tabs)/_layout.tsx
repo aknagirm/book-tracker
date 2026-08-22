@@ -1,8 +1,11 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useWishlist } from '../../src/hooks/useWishlist';
 
 export default function TabLayout() {
+  const { wishlist } = useWishlist();
+
   return (
     <Tabs
       screenOptions={{
@@ -32,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="wishlist"
         options={{
-          title: 'Wishlist',
+          title: `Wishlist (${wishlist.length})`,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="heart-outline" size={size} color={color} />
           ),
