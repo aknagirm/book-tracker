@@ -10,7 +10,8 @@ function sanitize(value: string | null): string {
 export async function getAllBooks(): Promise<Book[]> {
   const db = await getDatabase();
   const results = await db.getAllAsync<Book>(
-    'SELECT * FROM books ORDER BY createdAt DESC'
+    'SELECT * FROM books ORDER BY createdAt DESC',
+    []
   );
   return results.map(row => ({
     ...row,
@@ -42,9 +43,10 @@ export async function getBookById(id: number): Promise<Book | null> {
 export async function insertBook(book: Omit<Book, 'id'>): Promise<number> {
   const db = await getDatabase();
   const result = await db.runAsync(
-    `INSERT INTO books (title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO books (coverUri, title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
     [
+      book.coverUri || '',
       book.title,
       book.author,
       book.publication || '',
@@ -65,9 +67,10 @@ export async function insertBook(book: Omit<Book, 'id'>): Promise<number> {
 export async function updateBook(book: Book): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    `UPDATE books SET title = ?, author = ?, publication = ?, actualPrice = ?, discountedPrice = ?, purchasedDate = ?, readingStartDate = ?, completionDate = ?, isSold = ?, soldDate = ?, soldPrice = ?
+    `UPDATE books SET coverUri = ?, title = ?, author = ?, publication = ?, actualPrice = ?, discountedPrice = ?, purchasedDate = ?, readingStartDate = ?, completionDate = ?, isSold = ?, soldDate = ?, soldPrice = ?
      WHERE id = ?`,
     [
+      book.coverUri || '',
       book.title,
       book.author,
       book.publication || '',
@@ -126,7 +129,8 @@ export async function getPurchasedStats(): Promise<{ year: number; month: number
     FROM books 
     WHERE purchasedDate IS NOT NULL AND purchasedDate != ''
     GROUP BY year, month
-    ORDER BY year DESC, month DESC`
+    ORDER BY year DESC, month DESC`,
+    []
   );
 }
 
@@ -140,7 +144,8 @@ export async function getCompletedStats(): Promise<{ year: number; month: number
     FROM books 
     WHERE completionDate IS NOT NULL AND completionDate != ''
     GROUP BY year, month
-    ORDER BY year DESC, month DESC`
+    ORDER BY year DESC, month DESC`,
+    []
   );
 }
 
@@ -149,9 +154,10 @@ export async function insertBooksInBulk(books: Omit<Book, 'id'>[]): Promise<void
   await db.withTransactionAsync(async () => {
     for (const book of books) {
       await db.runAsync(
-        `INSERT INTO books (title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO books (coverUri, title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
         [
+          book.coverUri || '',
           book.title,
           book.author,
           book.publication || '',

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Stack } from 'expo-router';
 import { PaperProvider, MD3LightTheme } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
@@ -33,7 +33,6 @@ export default function RootLayout() {
         <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="book/edit" options={{ headerShown: false }} />
         <Stack.Screen name="wishlist/add" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)/data" options={{ headerShown: false }} />
       </Stack>
     </PaperProvider>
   );

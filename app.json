@@ -5,11 +5,26 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
-      "package": "com.booktracker"
+      "package": "com.booktracker",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
-    "plugins": ["expo-router"],
-    "scheme": "booktracker"
+    "plugins": [
+      "expo-router",
+      "expo-camera"
+    ],
+    "scheme": "booktracker",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c4c8ce68-493b-48de-b0ca-901ba1f21773"
+      }
+    }
   }
 }

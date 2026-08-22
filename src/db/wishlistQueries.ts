@@ -4,7 +4,8 @@ import { WishlistBook } from '../types';
 export async function getAllWishlistBooks(): Promise<WishlistBook[]> {
   const db = await getDatabase();
   return await db.getAllAsync<WishlistBook>(
-    'SELECT * FROM wishlist ORDER BY addedDate DESC'
+    'SELECT * FROM wishlist ORDER BY addedDate DESC',
+    []
   );
 }
 
@@ -41,9 +42,10 @@ export async function moveWishlistToBooks(wishlistId: number): Promise<number> {
 
   const now = new Date().toISOString().split('T')[0];
   const result = await db.runAsync(
-    `INSERT INTO books (title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO books (coverUri, title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
     [
+      '',
       wishlistBook.title,
       wishlistBook.author,
       wishlistBook.publication || '',

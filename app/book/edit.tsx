@@ -3,13 +3,14 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { TextInput, Button, Appbar, ActivityIndicator } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { DatePickerInput } from '../../src/components/DatePickerInput';
+import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useBook, useBooks } from '../../src/hooks/useBooks';
 
 export default function EditBookScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { book, loading } = useBook(Number(id));
-  const { editBook } = useBooks();
+  const { books, editBook } = useBooks();
 
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -20,6 +21,8 @@ export default function EditBookScreen() {
   const [readingStartDate, setReadingStartDate] = useState<string | null>(null);
   const [completionDate, setCompletionDate] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const authorSuggestions = Array.from(new Set(books.map((item) => item.author).filter(Boolean))).sort();
+  const publisherSuggestions = Array.from(new Set(books.map((item) => item.publication).filter(Boolean))).sort();
 
   useEffect(() => {
     if (book) {
@@ -80,19 +83,17 @@ export default function EditBookScreen() {
           mode="outlined"
           style={styles.input}
         />
-        <TextInput
+        <AutocompleteInput
           label="Author *"
           value={author}
           onChangeText={setAuthor}
-          mode="outlined"
-          style={styles.input}
+          suggestions={authorSuggestions}
         />
-        <TextInput
-          label="Publication"
+        <AutocompleteInput
+          label="Publisher"
           value={publication}
           onChangeText={setPublication}
-          mode="outlined"
-          style={styles.input}
+          suggestions={publisherSuggestions}
         />
         <View style={styles.row}>
           <TextInput

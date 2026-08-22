@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import { Card, Text, Chip, useTheme } from 'react-native-paper';
 import { Book } from '../types';
 
@@ -24,6 +24,9 @@ export function BookCard({ book, onPress }: Props) {
   return (
     <Card style={styles.card} onPress={onPress} mode="elevated">
       <Card.Content>
+        {book.coverUri ? (
+          <Image source={{ uri: book.coverUri }} style={styles.cover} />
+        ) : null}
         <Text variant="titleMedium" numberOfLines={1} style={styles.title}>
           {book.title}
         </Text>
@@ -59,6 +62,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '600',
+  },
+  cover: {
+    width: 72,
+    height: 96,
+    borderRadius: 4,
+    marginBottom: 8,
   },
   author: {
     color: '#616161',

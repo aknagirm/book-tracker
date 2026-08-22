@@ -1,5 +1,6 @@
 export interface Book {
   id: number;
+  coverUri?: string | null;
   title: string;
   author: string;
   publication: string;

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Image } from 'react-native';
 import { Text, Appbar, Card, Button, Chip, Divider, Portal, Dialog, TextInput } from 'react-native-paper';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useBook, useBooks } from '../../src/hooks/useBooks';
@@ -80,6 +80,9 @@ export default function BookDetailScreen() {
       <ScrollView style={styles.content}>
         <Card style={styles.card}>
           <Card.Content>
+            {book.coverUri ? (
+              <Image source={{ uri: book.coverUri }} style={styles.cover} />
+            ) : null}
             <View style={styles.titleRow}>
               <Text variant="headlineSmall" style={styles.title}>
                 {book.title}
@@ -110,14 +113,12 @@ export default function BookDetailScreen() {
               <Text variant="bodyMedium">Actual Price</Text>
               <Text variant="bodyMedium" style={styles.value}>₹{book.actualPrice.toFixed(0)}</Text>
             </View>
-            {book.discountedPrice > 0 && (
-              <View style={styles.detailRow}>
-                <Text variant="bodyMedium">Discounted Price</Text>
-                <Text variant="bodyMedium" style={[styles.value, { color: '#4caf50' }]}>
-                  ₹{book.discountedPrice.toFixed(0)}
-                </Text>
-              </View>
-            )}
+            <View style={styles.detailRow}>
+              <Text variant="bodyMedium">Discounted Price</Text>
+              <Text variant="bodyMedium" style={[styles.value, { color: '#4caf50' }]}>
+                ₹{book.discountedPrice.toFixed(0)}
+              </Text>
+            </View>
             {book.discountedPrice > 0 && book.actualPrice > book.discountedPrice && (
               <View style={styles.detailRow}>
                 <Text variant="bodyMedium">You Saved</Text>
@@ -242,6 +243,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontWeight: '600',
     marginRight: 8,
+  },
+  cover: {
+    width: 160,
+    height: 220,
+    borderRadius: 6,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   author: {
     marginTop: 4,

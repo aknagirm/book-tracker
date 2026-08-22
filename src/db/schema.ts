@@ -1,6 +1,7 @@
 export const CREATE_BOOKS_TABLE = `
   CREATE TABLE IF NOT EXISTS books (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    coverUri TEXT,
     title TEXT NOT NULL,
     author TEXT NOT NULL,
     publication TEXT DEFAULT '',

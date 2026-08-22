@@ -6,13 +6,13 @@ import { BookCard } from '../../src/components/BookCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { useBooks } from '../../src/hooks/useBooks';
 
-type Filter = 'all' | 'reading' | 'completed' | 'sold';
+type Filter = 'purchased' | 'reading' | 'completed' | 'sold';
 
 export default function BookListScreen() {
   const { books, loading, refresh } = useBooks();
   const [search, setSearch] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [filter, setFilter] = useState<Filter>('purchased');
   const router = useRouter();
 
   useFocusEffect(
@@ -21,24 +21,31 @@ export default function BookListScreen() {
     }, [])
   );
 
-  const filteredBooks = books.filter(book => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(search.toLowerCase()) ||
-      book.author.toLowerCase().includes(search.toLowerCase());
+  const filteredBooks = books
+    .filter(book => {
+      const normalizedSearch = search.toLowerCase();
+      const matchesSearch =
+        book.title.toLowerCase().includes(normalizedSearch) ||
+        book.author.toLowerCase().includes(normalizedSearch);
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    switch (filter) {
-      case 'reading':
-        return book.readingStartDate && !book.completionDate && !book.isSold;
-      case 'completed':
-        return book.completionDate !== null && !book.isSold;
-      case 'sold':
-        return book.isSold;
-      default:
-        return true;
-    }
-  });
+      switch (filter) {
+        case 'reading':
+          return book.readingStartDate && !book.completionDate && !book.isSold;
+        case 'completed':
+          return book.completionDate !== null && !book.isSold;
+        case 'sold':
+          return book.isSold;
+        case 'purchased':
+          return !book.readingStartDate && !book.completionDate && !book.isSold;
+      }
+    })
+    .sort((firstBook, secondBook) => {
+      const firstDate = firstBook.purchasedDate || firstBook.createdAt;
+      const secondDate = secondBook.purchasedDate || secondBook.createdAt;
+      return secondDate.localeCompare(firstDate);
+    });
 
   const handleSearchClose = () => {
     setSearchVisible(false);
@@ -71,7 +78,7 @@ export default function BookListScreen() {
         value={filter}
         onValueChange={(value) => setFilter(value as Filter)}
         buttons={[
-          { value: 'all', label: 'All' },
+          { value: 'purchased', label: 'Purchased' },
           { value: 'reading', label: 'Reading' },
           { value: 'completed', label: 'Done' },
           { value: 'sold', label: 'Sold' },
