@@ -62,3 +62,23 @@ export async function moveWishlistToBooks(wishlistId: number): Promise<number> {
   await db.runAsync('DELETE FROM wishlist WHERE id = ?', [wishlistId]);
   return result.lastInsertRowId;
 }
+
+export async function insertWishlistBooksInBulk(books: Omit<WishlistBook, 'id'>[]): Promise<void> {
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    for (const book of books) {
+      await db.runAsync(
+        `INSERT INTO wishlist (title, author, publication, expectedPrice, notes, addedDate)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          book.title,
+          book.author,
+          book.publication || '',
+          book.expectedPrice || 0,
+          book.notes || '',
+          book.addedDate,
+        ]
+      );
+    }
+  });
+}

@@ -38,6 +38,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="data"
+        options={{
+          title: 'Data',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="database-export-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

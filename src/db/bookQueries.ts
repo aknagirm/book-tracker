@@ -143,3 +143,29 @@ export async function getCompletedStats(): Promise<{ year: number; month: number
     ORDER BY year DESC, month DESC`
   );
 }
+
+export async function insertBooksInBulk(books: Omit<Book, 'id'>[]): Promise<void> {
+  const db = await getDatabase();
+  await db.withTransactionAsync(async () => {
+    for (const book of books) {
+      await db.runAsync(
+        `INSERT INTO books (title, author, publication, actualPrice, discountedPrice, purchasedDate, readingStartDate, completionDate, isSold, soldDate, soldPrice, createdAt)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          book.title,
+          book.author,
+          book.publication || '',
+          book.actualPrice || 0,
+          book.discountedPrice || 0,
+          sanitize(book.purchasedDate),
+          sanitize(book.readingStartDate),
+          sanitize(book.completionDate),
+          book.isSold ? 1 : 0,
+          sanitize(book.soldDate),
+          book.soldPrice || 0,
+          book.createdAt,
+        ]
+      );
+    }
+  });
+}
