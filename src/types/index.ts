@@ -40,3 +40,21 @@ export interface YearlyStats {
   totalSpent: number;
   months: MonthlyStats[];
 }
+
+export interface StatisticsSummary {
+  ownedCount: number;
+  completedCount: number;
+  soldCount: number;
+  totalSpent: number;
+  totalEarnings: number;
+  netSpent: number;
+  monthly: MonthlySummary[];
+}
+
+export interface MonthlySummary {
+  month: number;
+  purchasedCount: number;
+  completedCount: number;
+  soldCount: number;
+  netSpent: number;
+}

@@ -17,7 +17,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-camera"
+      "react-native-document-scanner-plugin"
     ],
     "scheme": "booktracker",
     "extra": {

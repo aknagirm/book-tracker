@@ -33,6 +33,7 @@ export default function RootLayout() {
         <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="book/edit" options={{ headerShown: false }} />
         <Stack.Screen name="wishlist/add" options={{ headerShown: false }} />
+        <Stack.Screen name="statistics/books" options={{ headerShown: false }} />
       </Stack>
     </PaperProvider>
   );

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Modal, Alert } from 'react-native';
-import { TextInput, Button, Appbar, SegmentedButtons } from 'react-native-paper';
+import { View, ScrollView, StyleSheet, Alert, Image } from 'react-native';
+import { TextInput, Button, Appbar, SegmentedButtons, IconButton, Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import { DatePickerInput } from '../../src/components/DatePickerInput';
 import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useBooks } from '../../src/hooks/useBooks';
@@ -27,9 +27,6 @@ export default function AddBookScreen() {
   const [expectedPrice, setExpectedPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
-  const [scannerVisible, setScannerVisible] = useState(false);
-  const [scanning, setScanning] = useState(true);
-  const [permission, requestPermission] = useCameraPermissions();
   const [coverUri, setCoverUri] = useState<string | null>(null);
   const authorSuggestions = Array.from(new Set([
     ...books.map((book) => book.author),
@@ -40,67 +37,42 @@ export default function AddBookScreen() {
     ...wishlist.map((book) => book.publication),
   ].filter(Boolean))).sort();
 
-  const openScanner = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
-        Alert.alert('Camera Permission Required', 'Allow camera access to scan a book barcode.');
-        return;
-      }
-    }
-    setScanning(true);
-    setScannerVisible(true);
+  const chooseCoverImage = () => {
+    Alert.alert('Add Cover Image', 'Choose an image source', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Take Photo', onPress: () => selectCoverFromCamera() },
+      { text: 'Choose from Gallery', onPress: () => selectCoverFromGallery() },
+    ]);
   };
 
-  const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    if (!scanning) return;
+  const selectCoverFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [2, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
+  };
 
-    setScanning(false);
-    const isbnMatch = data.match(/(?:97[89]\d{10}|\d{9}[\dX])/i);
-    const isbn = isbnMatch?.[0] ?? '';
-    if (!/^(?:\d{10}|\d{13})$/i.test(isbn)) {
-      Alert.alert('Unsupported Barcode', 'Please scan an ISBN-10 or ISBN-13 book barcode.');
-      setScanning(true);
-      return;
-    }
+  const selectCoverFromCamera = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [2, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
+  };
 
+  const scanCoverEdges = async () => {
     try {
-      const openLibraryResponse = await fetch(
-        `https://openlibrary.org/search.json?isbn=${isbn}&limit=1`
-      );
-      const openLibraryResult = openLibraryResponse.ok
-        ? await openLibraryResponse.json()
-        : null;
-      const openLibraryBook = openLibraryResult?.docs?.[0];
-
-      let title = openLibraryBook?.title;
-      let authors = openLibraryBook?.author_name;
-      let publisher = openLibraryBook?.publisher?.[0];
-
-      if (!title || !authors?.length || !publisher) {
-        const googleResponse = await fetch(
-          `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
-        );
-        const googleResult = googleResponse.ok ? await googleResponse.json() : null;
-        const googleBook = googleResult?.items?.[0]?.volumeInfo;
-        title = title || googleBook?.title;
-        authors = authors?.length ? authors : googleBook?.authors;
-        publisher = publisher || googleBook?.publisher;
-      }
-
-      if (!title) throw new Error('Book not found');
-
-      setTitle(title);
-      setAuthor(authors?.join(', ') || '');
-      setPublication(publisher || '');
-      setScannerVisible(false);
-
-      if (!authors?.length) {
-        Alert.alert('Partial Details Found', 'Some book details were not available. Please complete them manually.');
-      }
-    } catch {
-      Alert.alert('Book Not Found', `No details were found for ISBN ${isbn}. You can enter the book manually.`);
-      setScanning(true);
+      const { default: DocumentScanner } = await import('react-native-document-scanner-plugin');
+      const result = await DocumentScanner.scanDocument({ maxNumDocuments: 1 });
+      if (result.scannedImages?.length) setCoverUri(result.scannedImages[0]);
+    } catch (error) {
+      console.error('Error scanning cover edges:', error);
+      Alert.alert('Scan Failed', 'Could not detect the book cover edges. Please try again.');
     }
   };
 
@@ -149,14 +121,20 @@ export default function AddBookScreen() {
         <Appbar.BackAction onPress={() => router.back()} />
         <Appbar.Content title="Add Book" />
       </Appbar.Header>
-      <Button
-        mode="outlined"
-        icon="barcode-scan"
-        onPress={openScanner}
-        style={styles.scanButton}
-      >
-        Scan ISBN Barcode
-      </Button>
+      {bookType === 'purchased' && (
+        <>
+          <Button mode="outlined" icon="camera-document" onPress={scanCoverEdges} style={styles.scanButton}>
+            Scan Cover Edges
+          </Button>
+          <View style={styles.coverActionRow}>
+            <Button mode="outlined" icon="image-plus" onPress={chooseCoverImage} style={styles.coverButton}>
+              {coverUri ? 'Change Cover Image' : 'Add Cover Image'}
+            </Button>
+            {coverUri ? <IconButton icon="close-circle" accessibilityLabel="Remove cover image" onPress={() => setCoverUri(null)} /> : null}
+          </View>
+          {coverUri ? <Image source={{ uri: coverUri }} style={styles.coverPreview} /> : null}
+        </>
+      )}
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
         <TextInput
           label="Title *"
@@ -192,7 +170,7 @@ export default function AddBookScreen() {
           <>
             <View style={styles.row}>
               <TextInput
-                label="Actual Price (₹)"
+                label="Printed Price (₹)"
                 value={actualPrice}
                 onChangeText={setActualPrice}
                 keyboardType="numeric"
@@ -258,83 +236,21 @@ export default function AddBookScreen() {
           {bookType === 'wishlist' ? 'Add to Wishlist' : 'Save Book'}
         </Button>
       </ScrollView>
-
-      <Modal visible={scannerVisible} animationType="slide" onRequestClose={() => setScannerVisible(false)}>
-        <View style={styles.scannerContainer}>
-          <Appbar.Header>
-            <Appbar.BackAction onPress={() => setScannerVisible(false)} />
-            <Appbar.Content title="Scan ISBN Barcode" />
-          </Appbar.Header>
-          <CameraView
-            style={styles.camera}
-            facing="back"
-            barcodeScannerSettings={{
-              barcodeTypes: ['ean13', 'ean8', 'code39', 'code128', 'qr', 'datamatrix'],
-            }}
-            onBarcodeScanned={scanning ? handleBarcodeScanned : undefined}
-          >
-            <View style={styles.scanFrame} />
-          </CameraView>
-          <Button mode="outlined" onPress={() => setScannerVisible(false)} style={styles.cancelScanButton}>
-            Cancel
-          </Button>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  form: {
-    flex: 1,
-  },
-  formContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  input: {
-    marginBottom: 12,
-    backgroundColor: 'white',
-  },
-  typeToggle: {
-    marginBottom: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  saveButton: {
-    marginTop: 16,
-  },
-  scanButton: {
-    marginHorizontal: 16,
-    marginTop: 12,
-  },
-  scannerContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  camera: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scanFrame: {
-    width: '80%',
-    height: 160,
-    borderWidth: 2,
-    borderColor: '#ffffff',
-    borderRadius: 8,
-  },
-  cancelScanButton: {
-    margin: 16,
-    backgroundColor: '#ffffff',
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  form: { flex: 1 },
+  formContent: { padding: 16, paddingBottom: 32 },
+  input: { marginBottom: 12, backgroundColor: 'white' },
+  typeToggle: { marginBottom: 16 },
+  row: { flexDirection: 'row', gap: 12 },
+  halfInput: { flex: 1 },
+  saveButton: { marginTop: 16 },
+  scanButton: { marginHorizontal: 16, marginTop: 12 },
+  coverActionRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 8 },
+  coverButton: { flex: 1 },
+  coverPreview: { width: 100, height: 150, borderRadius: 6, alignSelf: 'center', marginTop: 12 },
 });

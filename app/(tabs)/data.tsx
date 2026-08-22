@@ -204,7 +204,7 @@ export default function DataScreen() {
             'Title *',
             'Author *',
             'Publication',
-            'Actual Price (₹)',
+            'Printed Price (₹)',
             'Discounted Price (₹)',
             'Purchased Date',
             'Reading Start Date',

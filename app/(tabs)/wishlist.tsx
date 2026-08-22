@@ -130,7 +130,7 @@ export default function WishlistScreen() {
           <Dialog.Content>
             <DatePickerInput label="Purchase Date" value={purchasedDate} onChange={setPurchasedDate} />
             <TextInput
-              label="Actual Price (₹)"
+              label="Printed Price (₹)"
               value={actualPrice}
               onChangeText={setActualPrice}
               keyboardType="numeric"

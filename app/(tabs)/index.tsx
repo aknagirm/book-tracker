@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager, Animated } from 'react-native';
+import { View, FlatList, StyleSheet, Pressable, LayoutAnimation, Animated } from 'react-native';
 import { Searchbar, FAB, Appbar, Text } from 'react-native-paper';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { BookCard } from '../../src/components/BookCard';
@@ -7,10 +7,6 @@ import { EmptyState } from '../../src/components/EmptyState';
 import { useBooks } from '../../src/hooks/useBooks';
 
 type Filter = 'purchased' | 'reading' | 'completed' | 'sold';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export default function BookListScreen() {
   const { books, loading, refresh } = useBooks();
@@ -107,7 +103,7 @@ export default function BookListScreen() {
         onLayout={(event) => setFilterWidth(event.nativeEvent.layout.width)}
       >
         {[
-          { value: 'purchased', label: 'Owned', count: bookCounts.purchased },
+          { value: 'purchased', label: 'Purchased', count: bookCounts.purchased },
           { value: 'reading', label: 'Reading', count: bookCounts.reading },
           { value: 'completed', label: 'Done', count: bookCounts.completed },
           { value: 'sold', label: 'Sold', count: bookCounts.sold },

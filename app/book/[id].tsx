@@ -132,7 +132,7 @@ export default function BookDetailScreen() {
             <Text variant="titleSmall" style={styles.sectionTitle}>Price Details</Text>
             <Divider style={styles.divider} />
             <View style={styles.detailRow}>
-              <Text variant="bodyMedium">Actual Price</Text>
+              <Text variant="bodyMedium">Printed Price</Text>
               <Text variant="bodyMedium" style={styles.value}>₹{book.actualPrice.toFixed(0)}</Text>
             </View>
             <View style={styles.detailRow}>
@@ -199,14 +199,14 @@ export default function BookDetailScreen() {
 
         {!book.isSold && (
           <View>
-            {!book.readingStartDate && (
+            {(!book.readingStartDate || book.completionDate) && (
               <Button
                 mode="outlined"
                 icon="book-open-page-variant"
                 onPress={() => setReadingDialogVisible(true)}
                 style={styles.actionButton}
               >
-                Start Reading
+                {book.completionDate ? 'Read Again' : 'Start Reading'}
               </Button>
             )}
             {book.readingStartDate && !book.completionDate && (
@@ -247,7 +247,7 @@ export default function BookDetailScreen() {
           </Dialog.Actions>
         </Dialog>
         <Dialog visible={readingDialogVisible} onDismiss={() => setReadingDialogVisible(false)}>
-          <Dialog.Title>Start Reading</Dialog.Title>
+          <Dialog.Title>{book.completionDate ? 'Read Again' : 'Start Reading'}</Dialog.Title>
           <Dialog.Content>
             <DatePickerInput
               label="Reading Start Date"
@@ -257,7 +257,9 @@ export default function BookDetailScreen() {
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setReadingDialogVisible(false)}>Cancel</Button>
-            <Button onPress={handleStartReading} disabled={!readingStartDate}>Start</Button>
+            <Button onPress={handleStartReading} disabled={!readingStartDate}>
+              {book.completionDate ? 'Read Again' : 'Start'}
+            </Button>
           </Dialog.Actions>
         </Dialog>
         <Dialog visible={sellDialogVisible} onDismiss={() => setSellDialogVisible(false)}>

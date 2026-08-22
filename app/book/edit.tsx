@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { TextInput, Button, Appbar, ActivityIndicator } from 'react-native-paper';
+import { View, ScrollView, StyleSheet, Alert, Image } from 'react-native';
+import { TextInput, Button, Appbar, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { DatePickerInput } from '../../src/components/DatePickerInput';
 import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useBook, useBooks } from '../../src/hooks/useBooks';
@@ -21,6 +22,7 @@ export default function EditBookScreen() {
   const [readingStartDate, setReadingStartDate] = useState<string | null>(null);
   const [completionDate, setCompletionDate] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [coverUri, setCoverUri] = useState<string | null>(null);
   const authorSuggestions = Array.from(new Set(books.map((item) => item.author).filter(Boolean))).sort();
   const publisherSuggestions = Array.from(new Set(books.map((item) => item.publication).filter(Boolean))).sort();
 
@@ -34,8 +36,48 @@ export default function EditBookScreen() {
       setPurchasedDate(book.purchasedDate);
       setReadingStartDate(book.readingStartDate);
       setCompletionDate(book.completionDate);
+      setCoverUri(book.coverUri || null);
     }
   }, [book]);
+
+  const chooseCoverImage = () => {
+    Alert.alert('Change Cover Image', 'Choose an image source', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Take Photo', onPress: selectCoverFromCamera },
+      { text: 'Choose from Gallery', onPress: selectCoverFromGallery },
+    ]);
+  };
+
+  const selectCoverFromGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [2, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
+  };
+
+  const selectCoverFromCamera = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [2, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled) setCoverUri(result.assets[0].uri);
+  };
+
+  const scanCoverEdges = async () => {
+    try {
+      const { default: DocumentScanner } = await import('react-native-document-scanner-plugin');
+      const result = await DocumentScanner.scanDocument({ maxNumDocuments: 1 });
+      if (result.scannedImages?.length) setCoverUri(result.scannedImages[0]);
+    } catch (error) {
+      console.error('Error scanning cover edges:', error);
+      Alert.alert('Scan Failed', 'Could not detect the book cover edges. Please try again.');
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim() || !author.trim() || !book) return;
@@ -52,6 +94,7 @@ export default function EditBookScreen() {
         purchasedDate,
         readingStartDate,
         completionDate,
+        coverUri,
       });
       router.back();
     } catch (error) {
@@ -97,7 +140,7 @@ export default function EditBookScreen() {
         />
         <View style={styles.row}>
           <TextInput
-            label="Actual Price (₹)"
+            label="Printed Price (₹)"
             value={actualPrice}
             onChangeText={setActualPrice}
             keyboardType="numeric"
@@ -128,6 +171,22 @@ export default function EditBookScreen() {
           value={completionDate}
           onChange={setCompletionDate}
         />
+        <View style={styles.coverActionRow}>
+          <Button mode="outlined" icon="camera-document" onPress={scanCoverEdges} style={styles.coverButton}>
+            Scan Cover Edges
+          </Button>
+          <Button mode="outlined" icon="image-edit" onPress={chooseCoverImage} style={styles.coverButton}>
+            {coverUri ? 'Change Cover Image' : 'Add Cover Image'}
+          </Button>
+          {coverUri ? (
+            <IconButton
+              icon="close-circle"
+              accessibilityLabel="Remove cover image"
+              onPress={() => setCoverUri(null)}
+            />
+          ) : null}
+        </View>
+        {coverUri ? <Image source={{ uri: coverUri }} style={styles.coverPreview} /> : null}
         <Button
           mode="contained"
           onPress={handleSave}
@@ -167,5 +226,20 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 16,
+  },
+  coverActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  coverButton: {
+    flex: 1,
+  },
+  coverPreview: {
+    width: 100,
+    height: 150,
+    borderRadius: 6,
+    alignSelf: 'center',
+    marginTop: 12,
   },
 });
