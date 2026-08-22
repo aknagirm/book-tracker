@@ -14,6 +14,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'My Books',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="bookshelf" size={size} color={color} />
           ),

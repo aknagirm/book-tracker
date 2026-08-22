@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
-import { Searchbar, FAB, SegmentedButtons, Text } from 'react-native-paper';
+import { Searchbar, FAB, SegmentedButtons, IconButton, Appbar } from 'react-native-paper';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { BookCard } from '../../src/components/BookCard';
 import { EmptyState } from '../../src/components/EmptyState';
@@ -11,6 +11,7 @@ type Filter = 'all' | 'reading' | 'completed' | 'sold';
 export default function BookListScreen() {
   const { books, loading, refresh } = useBooks();
   const [search, setSearch] = useState('');
+  const [searchVisible, setSearchVisible] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
   const router = useRouter();
 
@@ -39,14 +40,33 @@ export default function BookListScreen() {
     }
   });
 
+  const handleSearchClose = () => {
+    setSearchVisible(false);
+    setSearch('');
+  };
+
   return (
     <View style={styles.container}>
-      <Searchbar
-        placeholder="Search books..."
-        onChangeText={setSearch}
-        value={search}
-        style={styles.searchbar}
-      />
+      <Appbar.Header>
+        <Appbar.Content title="My Books" />
+        <Appbar.Action
+          icon="magnify"
+          onPress={() => setSearchVisible(!searchVisible)}
+        />
+      </Appbar.Header>
+
+      {searchVisible && (
+        <Searchbar
+          placeholder="Search books..."
+          onChangeText={setSearch}
+          value={search}
+          style={styles.searchbar}
+          autoFocus
+          onIconPress={handleSearchClose}
+          icon="arrow-left"
+        />
+      )}
+
       <SegmentedButtons
         value={filter}
         onValueChange={(value) => setFilter(value as Filter)}
@@ -93,7 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   searchbar: {
-    margin: 16,
+    marginHorizontal: 16,
     marginBottom: 8,
   },
   filters: {
