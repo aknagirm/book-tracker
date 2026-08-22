@@ -103,7 +103,7 @@ export default function BookListScreen() {
         onLayout={(event) => setFilterWidth(event.nativeEvent.layout.width)}
       >
         {[
-          { value: 'purchased', label: 'Purchased', count: bookCounts.purchased },
+          { value: 'purchased', label: 'In Stock', count: bookCounts.purchased },
           { value: 'reading', label: 'Reading', count: bookCounts.reading },
           { value: 'completed', label: 'Done', count: bookCounts.completed },
           { value: 'sold', label: 'Sold', count: bookCounts.sold },

@@ -36,18 +36,18 @@ export function BookCard({ book, onPress }: Props) {
               {book.publication}
             </Text>
           ) : null}
-          <Chip
-            compact
-            style={[styles.chip, { backgroundColor: status.color + '20' }]}
-            textStyle={{ color: status.color, fontSize: 11 }}
-          >
-            {status.label}
-          </Chip>
-          {price > 0 && (
+          <View style={styles.statusRow}>
+            <Chip
+              compact
+              style={[styles.chip, { backgroundColor: status.color + '20' }]}
+              textStyle={{ color: status.color, fontSize: 11 }}
+            >
+              {status.label}
+            </Chip>
             <Text variant="labelMedium" style={styles.price}>
               ₹{price.toFixed(0)}
             </Text>
-          )}
+          </View>
         </View>
         {book.coverUri ? (
           <Image source={{ uri: book.coverUri }} style={styles.cover} />
@@ -102,13 +102,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   chip: {
-    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 8,
   },
   price: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
     color: '#616161',
+    fontWeight: '600',
   },
 });

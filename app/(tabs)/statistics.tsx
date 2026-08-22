@@ -108,7 +108,13 @@ export default function StatisticsScreen() {
         const monthValue = selectedMonth === undefined ? undefined : String(selectedMonth).padStart(2, '0');
         router.push(`/statistics/books?metric=${metric}&startDate=${year}-${monthValue || '01'}-01&endDate=${year}-${monthValue || '12'}-${monthValue ? new Date(year, selectedMonth!, 0).getDate() : '31'}`);
       }} />
-      {mode === 'year' && <MonthlyChart monthly={stats.monthly} />}
+      {mode === 'year' && (
+        <>
+          <MonthlyChart monthly={stats.monthly} metric="purchasedCount" title="Monthly Purchases" color="#2196f3" />
+          <MonthlyChart monthly={stats.monthly} metric="completedCount" title="Monthly Completions" color="#4caf50" />
+          <MonthlyChart monthly={stats.monthly} metric="netSpent" title="Monthly Net Spent" color="#6750a4" valuePrefix="₹" />
+        </>
+      )}
       {loading && <Text style={styles.message}>Updating statistics...</Text>}
     </ScrollView>
   );
@@ -141,9 +147,9 @@ function SummaryCard({ stats, year, expandable, onOpenBooks }: { stats: Statisti
   return (
     <Card style={styles.summaryCard}>
       <Card.Content>
-        {countMetric('Books Purchased', stats.ownedCount, '#2196f3', 'purchased')}
-        {countMetric('Books Completed', stats.completedCount, '#4caf50', 'completed')}
-        {countMetric('Books Sold', stats.soldCount, '#f44336', 'sold')}
+        {countMetric('Purchased', stats.ownedCount, '#2196f3', 'purchased')}
+        {countMetric('Completed', stats.completedCount, '#4caf50', 'completed')}
+        {countMetric('Sold', stats.soldCount, '#f44336', 'sold')}
         <Divider style={styles.divider} />
         <Metric label="Total Spent" value={`₹${stats.totalSpent.toFixed(0)}`} color="#ff9800" />
         <Metric label="Total Earnings" value={`₹${stats.totalEarnings.toFixed(0)}`} color="#00897b" />
@@ -153,33 +159,37 @@ function SummaryCard({ stats, year, expandable, onOpenBooks }: { stats: Statisti
   );
 }
 
-function MonthlyChart({ monthly }: { monthly: StatisticsSummary['monthly'] }) {
+function MonthlyChart({
+  monthly,
+  metric,
+  title,
+  color,
+  valuePrefix = '',
+}: {
+  monthly: StatisticsSummary['monthly'];
+  metric: 'purchasedCount' | 'completedCount' | 'netSpent';
+  title: string;
+  color: string;
+  valuePrefix?: string;
+}) {
   const rows = Array.from({ length: 12 }, (_, index) => monthly.find((item) => item.month === index + 1) || {
     month: index + 1, purchasedCount: 0, completedCount: 0, soldCount: 0, netSpent: 0,
   });
-  const maxValue = Math.max(1, ...rows.flatMap((row) => [row.purchasedCount, row.completedCount, row.soldCount, row.netSpent]));
+  const maxValue = Math.max(1, ...rows.map((row) => Math.abs(row[metric])));
 
   return (
     <Card style={styles.chartCard}>
       <Card.Content>
-        <Text variant="titleMedium" style={styles.chartTitle}>Monthly Activity</Text>
-        <View style={styles.legend}>
-          <Text style={{ color: '#2196f3' }}>Purchased</Text>
-          <Text style={{ color: '#f44336' }}>Sold</Text>
-          <Text style={{ color: '#4caf50' }}>Completed</Text>
-          <Text style={{ color: '#6750a4' }}>Net Spent</Text>
-        </View>
+        <Text variant="titleMedium" style={styles.chartTitle}>{title}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.chart}>
             {rows.map((row) => (
               <View key={row.month} style={styles.chartMonth}>
                 <View style={styles.bars}>
-                  <View style={[styles.bar, { height: Math.max(2, row.purchasedCount / maxValue * 110), backgroundColor: '#2196f3' }]} />
-                  <View style={[styles.bar, { height: Math.max(2, row.soldCount / maxValue * 110), backgroundColor: '#f44336' }]} />
-                  <View style={[styles.bar, { height: Math.max(2, row.completedCount / maxValue * 110), backgroundColor: '#4caf50' }]} />
-                  <View style={[styles.bar, { height: Math.max(2, row.netSpent / maxValue * 110), backgroundColor: '#6750a4' }]} />
+                  <View style={[styles.bar, { height: Math.max(2, Math.abs(row[metric]) / maxValue * 110), backgroundColor: color }]} />
                 </View>
                 <Text style={styles.chartMonthLabel}>{monthNames[row.month - 1].slice(0, 3)}</Text>
+                <Text style={[styles.chartValue, { color }]}>{valuePrefix}{Math.round(row[metric])}</Text>
               </View>
             ))}
           </View>
@@ -216,6 +226,7 @@ const styles = StyleSheet.create({
   bars: { height: 115, flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 9, borderRadius: 2 },
   chartMonthLabel: { marginTop: 8, color: '#616161', fontSize: 11 },
+  chartValue: { marginTop: 2, fontSize: 10, fontWeight: '600' },
   metricRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
   monthRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, paddingLeft: 24, backgroundColor: '#fafafa' },
   monthLabel: { color: '#616161' },
