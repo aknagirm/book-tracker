@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 
@@ -11,10 +11,34 @@ interface Props {
 
 export function AutocompleteInput({ label, value, suggestions, onChangeText }: Props) {
   const [focused, setFocused] = useState(false);
+  const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const searchValue = value.trim().toLowerCase();
   const matchingSuggestions = suggestions
     .filter((suggestion) => !searchValue || suggestion.toLowerCase().includes(searchValue))
     .slice(0, 6);
+
+  const handleFocus = () => {
+    if (blurTimeout.current) {
+      clearTimeout(blurTimeout.current);
+      blurTimeout.current = null;
+    }
+    setFocused(true);
+  };
+
+  const handleBlur = () => {
+    // Delay blur to allow onPress to fire on suggestions
+    blurTimeout.current = setTimeout(() => setFocused(false), 300);
+  };
+
+  const handleSelect = (suggestion: string) => {
+    if (blurTimeout.current) {
+      clearTimeout(blurTimeout.current);
+      blurTimeout.current = null;
+    }
+    onChangeText(suggestion);
+    setFocused(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -22,8 +46,8 @@ export function AutocompleteInput({ label, value, suggestions, onChangeText }: P
         label={label}
         value={value}
         onChangeText={onChangeText}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 150)}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         mode="outlined"
         style={styles.input}
       />
@@ -32,10 +56,7 @@ export function AutocompleteInput({ label, value, suggestions, onChangeText }: P
           {matchingSuggestions.map((suggestion) => (
             <Pressable
               key={suggestion}
-              onPress={() => {
-                onChangeText(suggestion);
-                setFocused(false);
-              }}
+              onPress={() => handleSelect(suggestion)}
               style={({ pressed }) => [styles.suggestion, pressed && styles.pressed]}
             >
               <Text>{suggestion}</Text>

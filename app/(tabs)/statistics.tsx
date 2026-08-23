@@ -27,8 +27,11 @@ export default function StatisticsScreen() {
   const [mode, setMode] = useState<StatisticsMode>('year');
   const [year, setYear] = useState(today.getFullYear());
   const [customRange, setCustomRange] = useState<CustomRange>('3months');
-  const [customStart, setCustomStart] = useState<string | null>(null);
-  const [customEnd, setCustomEnd] = useState<string | null>(null);
+  // Initialize custom dates for "3 months" default
+  const initialEnd = formatDate(today);
+  const initialStart = (() => { const d = new Date(); d.setMonth(d.getMonth() - 3); return formatDate(d); })();
+  const [customStart, setCustomStart] = useState<string | null>(initialStart);
+  const [customEnd, setCustomEnd] = useState<string | null>(initialEnd);
 
   const loadStats = useCallback(() => {
     const [startDate, endDate] = getRange(mode, year, customStart, customEnd);

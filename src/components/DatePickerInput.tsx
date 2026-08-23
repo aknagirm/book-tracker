@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import { TextInput, IconButton } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { TextInput } from 'react-native-paper';
 
 interface Props {
   label: string;
@@ -10,6 +10,11 @@ interface Props {
 
 export function DatePickerInput({ label, value, onChange }: Props) {
   const [text, setText] = useState(value || '');
+
+  // Sync internal text state when external value prop changes
+  useEffect(() => {
+    setText(value || '');
+  }, [value]);
 
   const handleChange = (input: string) => {
     // Auto-format as YYYY-MM-DD
