@@ -1,0 +1,37 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="110" y1="110" x2="930" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="0.5" stop-color="#F97316"/>
+      <stop offset="1" stop-color="#EA580C"/>
+    </linearGradient>
+    <linearGradient id="page" x1="260" y1="260" x2="760" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7ED"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="pageDark" x1="300" y1="260" x2="760" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FEF3C7"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="84" y="84" width="856" height="856" rx="200" fill="url(#bg)"/>
+
+  <path d="M248 720C248 649.8 305.8 592 376 592H482V780H376C305.8 780 248 722.2 248 652V720Z" fill="#FB923C" fill-opacity="0.35"/>
+  <path d="M776 720C776 649.8 718.2 592 648 592H542V780H648C718.2 780 776 722.2 776 652V720Z" fill="#FB923C" fill-opacity="0.35"/>
+
+  <path d="M214 714V300C282 268 351 258 420 282V714C352 685 282 684 214 714Z" fill="url(#page)"/>
+  <path d="M810 714V300C742 268 673 258 604 282V714C672 685 742 684 810 714Z" fill="url(#page)"/>
+
+  <path d="M476 242H548V790H476V242Z" fill="#7C2D12"/>
+  <path d="M510 274V774" stroke="#FDE68A" stroke-width="18" stroke-linecap="round"/>
+
+  <path d="M420 282C470 318 498 346 512 393V714C491 692 466 680 420 687V282Z" fill="#FFF7ED"/>
+  <path d="M604 282C554 318 526 346 512 393V714C533 692 558 680 604 687V282Z" fill="#FFF7ED"/>
+
+  <path d="M512 392L582 435L512 730L442 435L512 392Z" fill="#F59E0B" fill-opacity="0.18"/>
+  <path d="M512 420L560 453L512 666L464 453L512 420Z" fill="#EA580C" fill-opacity="0.28"/>
+  <path d="M512 470L536 500L512 603L488 500L512 470Z" fill="#7C2D12" fill-opacity="0.35"/>
+
+  <path d="M322 706C370 680 428 668 512 670C596 668 654 680 702 706L512 792L322 706Z" fill="#FDE68A" fill-opacity="0.9"/>
+</svg>
