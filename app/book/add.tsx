@@ -7,6 +7,7 @@ import { DatePickerInput } from '../../src/components/DatePickerInput';
 import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useBooks } from '../../src/hooks/useBooks';
 import { useWishlist } from '../../src/hooks/useWishlist';
+import { saveImagePermanently } from '../../src/utils/imageHelper';
 
 type BookType = 'purchased' | 'wishlist';
 
@@ -81,6 +82,16 @@ export default function AddBookScreen() {
 
     setSaving(true);
     try {
+      // Save cover image to permanent storage
+      let permanentCoverUri: string | null = null;
+      if (coverUri) {
+        try {
+          permanentCoverUri = await saveImagePermanently(coverUri);
+        } catch (e) {
+          console.error('Error saving cover image:', e);
+        }
+      }
+
       if (bookType === 'wishlist') {
         await addToWishlist({
           title: title.trim(),
@@ -94,7 +105,7 @@ export default function AddBookScreen() {
         await addBook({
           title: title.trim(),
           author: author.trim(),
-          coverUri,
+          coverUri: permanentCoverUri,
           publication: publication.trim(),
           actualPrice: parseFloat(actualPrice) || 0,
           discountedPrice: parseFloat(discountedPrice) || 0,

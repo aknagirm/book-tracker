@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { DatePickerInput } from '../../src/components/DatePickerInput';
 import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useBook, useBooks } from '../../src/hooks/useBooks';
+import { saveImagePermanently } from '../../src/utils/imageHelper';
 
 export default function EditBookScreen() {
   const router = useRouter();
@@ -84,6 +85,16 @@ export default function EditBookScreen() {
 
     setSaving(true);
     try {
+      // If cover changed, save new one permanently
+      let finalCoverUri = coverUri;
+      if (coverUri && coverUri !== book.coverUri) {
+        try {
+          finalCoverUri = await saveImagePermanently(coverUri);
+        } catch (e) {
+          console.error('Error saving cover image:', e);
+        }
+      }
+
       await editBook({
         ...book,
         title: title.trim(),
@@ -94,7 +105,7 @@ export default function EditBookScreen() {
         purchasedDate,
         readingStartDate,
         completionDate,
-        coverUri,
+        coverUri: finalCoverUri,
       });
       router.back();
     } catch (error) {
