@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, Keyboard } from 'react-native';
 import { Text, TextInput } from 'react-native-paper';
 
 interface Props {
@@ -10,34 +10,43 @@ interface Props {
 }
 
 export function AutocompleteInput({ label, value, suggestions, onChangeText }: Props) {
-  const [focused, setFocused] = useState(false);
-  const blurTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const justSelected = useRef(false);
 
   const searchValue = value.trim().toLowerCase();
-  const matchingSuggestions = suggestions
-    .filter((suggestion) => !searchValue || suggestion.toLowerCase().includes(searchValue))
-    .slice(0, 6);
+  const matchingSuggestions = searchValue
+    ? suggestions
+        .filter((s) => s.toLowerCase().includes(searchValue) && s.toLowerCase() !== searchValue)
+        .slice(0, 6)
+    : [];
 
   const handleFocus = () => {
-    if (blurTimeout.current) {
-      clearTimeout(blurTimeout.current);
-      blurTimeout.current = null;
+    if (!justSelected.current) {
+      setShowDropdown(true);
     }
-    setFocused(true);
+    justSelected.current = false;
   };
 
   const handleBlur = () => {
-    // Delay blur to allow onPress to fire on suggestions
-    blurTimeout.current = setTimeout(() => setFocused(false), 300);
+    // Don't close immediately — let TouchableOpacity handle selection first
+    setTimeout(() => {
+      if (!justSelected.current) {
+        setShowDropdown(false);
+      }
+      justSelected.current = false;
+    }, 400);
   };
 
   const handleSelect = (suggestion: string) => {
-    if (blurTimeout.current) {
-      clearTimeout(blurTimeout.current);
-      blurTimeout.current = null;
-    }
+    justSelected.current = true;
     onChangeText(suggestion);
-    setFocused(false);
+    setShowDropdown(false);
+    Keyboard.dismiss();
+  };
+
+  const handleChangeText = (text: string) => {
+    onChangeText(text);
+    setShowDropdown(true);
   };
 
   return (
@@ -45,22 +54,23 @@ export function AutocompleteInput({ label, value, suggestions, onChangeText }: P
       <TextInput
         label={label}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={handleChangeText}
         onFocus={handleFocus}
         onBlur={handleBlur}
         mode="outlined"
         style={styles.input}
       />
-      {focused && matchingSuggestions.length > 0 && (
+      {showDropdown && matchingSuggestions.length > 0 && (
         <View style={styles.suggestions}>
           {matchingSuggestions.map((suggestion) => (
-            <Pressable
+            <TouchableOpacity
               key={suggestion}
               onPress={() => handleSelect(suggestion)}
-              style={({ pressed }) => [styles.suggestion, pressed && styles.pressed]}
+              activeOpacity={0.6}
+              style={styles.suggestion}
             >
               <Text>{suggestion}</Text>
-            </Pressable>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -84,13 +94,14 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 8,
     overflow: 'hidden',
+    position: 'relative',
+    zIndex: 10,
   },
   suggestion: {
     minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 16,
-  },
-  pressed: {
-    backgroundColor: '#f0f0f0',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e0e0e0',
   },
 });
