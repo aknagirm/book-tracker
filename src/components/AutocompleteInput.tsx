@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { TouchableOpacity, StyleSheet, View, Keyboard } from 'react-native';
-import { Text, TextInput } from 'react-native-paper';
+import { Text, TextInput, Menu } from 'react-native-paper';
 
 interface Props {
   label: string;
@@ -10,8 +10,7 @@ interface Props {
 }
 
 export function AutocompleteInput({ label, value, suggestions, onChangeText }: Props) {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const justSelected = useRef(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const searchValue = value.trim().toLowerCase();
   const matchingSuggestions = searchValue
@@ -20,88 +19,52 @@ export function AutocompleteInput({ label, value, suggestions, onChangeText }: P
         .slice(0, 6)
     : [];
 
-  const handleFocus = () => {
-    if (!justSelected.current) {
-      setShowDropdown(true);
-    }
-    justSelected.current = false;
-  };
-
-  const handleBlur = () => {
-    // Don't close immediately — let TouchableOpacity handle selection first
-    setTimeout(() => {
-      if (!justSelected.current) {
-        setShowDropdown(false);
-      }
-      justSelected.current = false;
-    }, 400);
-  };
+  const showMenu = matchingSuggestions.length > 0 && menuVisible;
 
   const handleSelect = (suggestion: string) => {
-    justSelected.current = true;
     onChangeText(suggestion);
-    setShowDropdown(false);
+    setMenuVisible(false);
     Keyboard.dismiss();
-  };
-
-  const handleChangeText = (text: string) => {
-    onChangeText(text);
-    setShowDropdown(true);
   };
 
   return (
     <View style={styles.container}>
-      <TextInput
-        label={label}
-        value={value}
-        onChangeText={handleChangeText}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        mode="outlined"
-        style={styles.input}
-      />
-      {showDropdown && matchingSuggestions.length > 0 && (
-        <View style={styles.suggestions}>
-          {matchingSuggestions.map((suggestion) => (
-            <TouchableOpacity
-              key={suggestion}
-              onPress={() => handleSelect(suggestion)}
-              activeOpacity={0.6}
-              style={styles.suggestion}
-            >
-              <Text>{suggestion}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+      <Menu
+        visible={showMenu}
+        onDismiss={() => setMenuVisible(false)}
+        anchorPosition="bottom"
+        anchor={
+          <TextInput
+            label={label}
+            value={value}
+            onChangeText={(text) => {
+              onChangeText(text);
+              setMenuVisible(true);
+            }}
+            onFocus={() => setMenuVisible(true)}
+            mode="outlined"
+            style={styles.input}
+          />
+        }
+      >
+        {matchingSuggestions.map((suggestion) => (
+          <Menu.Item
+            key={suggestion}
+            onPress={() => handleSelect(suggestion)}
+            title={suggestion}
+          />
+        ))}
+      </Menu>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: 12,
     zIndex: 2,
   },
   input: {
-    marginBottom: 4,
     backgroundColor: 'white',
-  },
-  suggestions: {
-    backgroundColor: 'white',
-    borderColor: '#d0d0d0',
-    borderRadius: 4,
-    borderWidth: 1,
-    elevation: 4,
-    marginBottom: 8,
-    overflow: 'hidden',
-    position: 'relative',
-    zIndex: 10,
-  },
-  suggestion: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#e0e0e0',
   },
 });
