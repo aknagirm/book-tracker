@@ -1,16 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { TextInput, Button, Appbar } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { TextInput, Button, Appbar, ActivityIndicator } from 'react-native-paper';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useWishlist } from '../../src/hooks/useWishlist';
 import { useBooks } from '../../src/hooks/useBooks';
+import { getWishlistBookById } from '../../src/db/wishlistQueries';
+import { WishlistBook } from '../../src/types';
 
-export default function AddWishlistScreen() {
+export default function EditWishlistScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { books } = useBooks();
-  const { wishlist, addToWishlist } = useWishlist();
+  const { wishlist, editWishlistBook } = useWishlist();
 
+  const [item, setItem] = useState<WishlistBook | null>(null);
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [publication, setPublication] = useState('');
@@ -28,32 +33,60 @@ export default function AddWishlistScreen() {
     ...wishlist.map((b) => b.publication),
   ].filter(Boolean))).sort();
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getWishlistBookById(Number(id));
+        if (data) {
+          setItem(data);
+          setTitle(data.title);
+          setAuthor(data.author);
+          setPublication(data.publication);
+          setExpectedPrice(data.expectedPrice > 0 ? data.expectedPrice.toString() : '');
+          setNotes(data.notes);
+        }
+      } catch (error) {
+        console.error('Error loading wishlist item:', error);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
   const handleSave = async () => {
-    if (!title.trim() || !author.trim()) return;
+    if (!title.trim() || !author.trim() || !item) return;
 
     setSaving(true);
     try {
-      await addToWishlist({
+      await editWishlistBook({
+        ...item,
         title: title.trim(),
         author: author.trim(),
         publication: publication.trim(),
         expectedPrice: parseFloat(expectedPrice) || 0,
         notes: notes.trim(),
-        addedDate: new Date().toISOString().split('T')[0],
       });
       router.back();
     } catch (error) {
-      console.error('Error saving wishlist item:', error);
+      console.error('Error updating wishlist item:', error);
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Appbar.Header>
         <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Add to Wishlist" />
+        <Appbar.Content title="Edit Wishlist Item" />
       </Appbar.Header>
       <ScrollView style={styles.form} contentContainerStyle={styles.formContent}>
         <TextInput
@@ -99,7 +132,7 @@ export default function AddWishlistScreen() {
           disabled={!title.trim() || !author.trim() || saving}
           style={styles.saveButton}
         >
-          Add to Wishlist
+          Update
         </Button>
       </ScrollView>
     </View>

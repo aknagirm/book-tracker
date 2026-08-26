@@ -34,6 +34,31 @@ export async function deleteWishlistBook(id: number): Promise<void> {
   notifyWishlistChanged();
 }
 
+export async function updateWishlistBook(book: WishlistBook): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `UPDATE wishlist SET title = ?, author = ?, publication = ?, expectedPrice = ?, notes = ?
+     WHERE id = ?`,
+    [
+      book.title,
+      book.author,
+      book.publication || '',
+      book.expectedPrice || 0,
+      book.notes || '',
+      book.id,
+    ]
+  );
+  notifyWishlistChanged();
+}
+
+export async function getWishlistBookById(id: number): Promise<WishlistBook | null> {
+  const db = await getDatabase();
+  return await db.getFirstAsync<WishlistBook>(
+    'SELECT * FROM wishlist WHERE id = ?',
+    [id]
+  );
+}
+
 export async function moveWishlistToBooks(
   wishlistId: number,
   purchasedDate: string,

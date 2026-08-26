@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WishlistBook } from '../types';
-import { getAllWishlistBooks, insertWishlistBook, deleteWishlistBook, moveWishlistToBooks } from '../db/wishlistQueries';
+import { getAllWishlistBooks, insertWishlistBook, deleteWishlistBook, moveWishlistToBooks, updateWishlistBook } from '../db/wishlistQueries';
 import { subscribeToWishlistChanges } from '../db/wishlistEvents';
 
 export function useWishlist() {
@@ -49,6 +49,10 @@ export function useWishlist() {
     loading,
     refresh: loadWishlist,
     addToWishlist,
+    editWishlistBook: async (book: WishlistBook) => {
+      await updateWishlistBook(book);
+      await loadWishlist();
+    },
     removeFromWishlist,
     moveToPurchased,
   };

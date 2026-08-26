@@ -61,7 +61,7 @@ export default function WishlistScreen() {
   };
 
   const renderItem = ({ item }: { item: WishlistBook }) => (
-    <Card style={styles.card}>
+    <Card style={styles.card} onPress={() => router.push(`/wishlist/edit?id=${item.id}`)}>
       <Card.Content style={styles.cardContent}>
         <View style={styles.info}>
           <Text variant="titleMedium" numberOfLines={1}>
