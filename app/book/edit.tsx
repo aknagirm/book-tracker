@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { DatePickerInput } from '../../src/components/DatePickerInput';
 import { AutocompleteInput } from '../../src/components/AutocompleteInput';
 import { useBook, useBooks } from '../../src/hooks/useBooks';
-import { saveImagePermanently } from '../../src/utils/imageHelper';
+import { saveImagePermanently, resolveCoverUri } from '../../src/utils/imageHelper';
 
 export default function EditBookScreen() {
   const router = useRouter();
@@ -200,7 +200,7 @@ export default function EditBookScreen() {
             />
           ) : null}
         </View>
-        {coverUri ? <Image source={{ uri: coverUri }} style={styles.coverPreview} /> : null}
+        {coverUri ? <Image source={{ uri: resolveCoverUri(coverUri) ?? coverUri }} style={styles.coverPreview} /> : null}
         <Button
           mode="contained"
           onPress={handleSave}

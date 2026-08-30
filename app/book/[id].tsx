@@ -4,6 +4,7 @@ import { Text, Appbar, Card, Button, Chip, Divider, Portal, Dialog, TextInput } 
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useBook, useBooks } from '../../src/hooks/useBooks';
 import { DatePickerInput } from '../../src/components/DatePickerInput';
+import { resolveCoverUri } from '../../src/utils/imageHelper';
 
 export default function BookDetailScreen() {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function BookDetailScreen() {
         <Card style={styles.card}>
           <Card.Content>
             {book.coverUri ? (
-              <Image source={{ uri: book.coverUri }} style={styles.cover} />
+              <Image source={{ uri: resolveCoverUri(book.coverUri) ?? book.coverUri }} style={styles.cover} />
             ) : (
               <View style={[styles.cover, styles.coverPlaceholder]}>
                 <Text variant="bodyMedium" style={styles.placeholderText}>No Image</Text>

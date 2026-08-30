@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Card, Text, Chip, useTheme } from 'react-native-paper';
 import { Book } from '../types';
+import { resolveCoverUri } from '../utils/imageHelper';
 
 interface Props {
   book: Book;
@@ -50,7 +51,7 @@ export function BookCard({ book, onPress }: Props) {
           </View>
         </View>
         {book.coverUri ? (
-          <Image source={{ uri: book.coverUri }} style={styles.cover} />
+          <Image source={{ uri: resolveCoverUri(book.coverUri) ?? book.coverUri }} style={styles.cover} />
         ) : (
           <View style={[styles.cover, styles.coverPlaceholder]}>
             <Text variant="labelSmall" style={styles.placeholderText}>No Image</Text>
