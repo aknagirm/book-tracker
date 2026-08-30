@@ -141,7 +141,7 @@ export async function getPurchasedStats(): Promise<{ year: number; month: number
       CAST(strftime('%Y', purchasedDate) AS INTEGER) as year,
       CAST(strftime('%m', purchasedDate) AS INTEGER) as month,
       COUNT(*) as count,
-      SUM(COALESCE(discountedPrice, actualPrice)) as totalSpent
+      SUM(COALESCE(discountedPrice, 0)) as totalSpent
     FROM books 
     WHERE purchasedDate IS NOT NULL AND purchasedDate != ''
     GROUP BY year, month
@@ -175,7 +175,7 @@ export async function getStatisticsSummary(
       COUNT(CASE WHEN purchasedDate BETWEEN ? AND ? THEN 1 END) as ownedCount,
       COUNT(CASE WHEN completionDate BETWEEN ? AND ? THEN 1 END) as completedCount,
       COUNT(CASE WHEN isSold = 1 AND soldDate BETWEEN ? AND ? THEN 1 END) as soldCount,
-      COALESCE(SUM(CASE WHEN purchasedDate BETWEEN ? AND ? THEN COALESCE(discountedPrice, actualPrice, 0) ELSE 0 END), 0) as totalSpent,
+      COALESCE(SUM(CASE WHEN purchasedDate BETWEEN ? AND ? THEN COALESCE(discountedPrice, 0) ELSE 0 END), 0) as totalSpent,
       COALESCE(SUM(CASE WHEN isSold = 1 AND soldDate BETWEEN ? AND ? THEN COALESCE(soldPrice, 0) ELSE 0 END), 0) as totalEarnings
     FROM books`,
     [startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate]
@@ -204,7 +204,7 @@ export async function getStatisticsSummary(
       SUM(totalEarnings) as totalEarnings
     FROM (
       SELECT CAST(strftime('%m', purchasedDate) AS INTEGER) as month, COUNT(*) as purchasedCount, 0 as completedCount, 0 as soldCount,
-        SUM(COALESCE(discountedPrice, actualPrice, 0)) as totalSpent, 0 as totalEarnings
+        SUM(COALESCE(discountedPrice, 0)) as totalSpent, 0 as totalEarnings
       FROM books WHERE purchasedDate BETWEEN ? AND ? GROUP BY month
       UNION ALL
       SELECT CAST(strftime('%m', completionDate) AS INTEGER), 0, COUNT(*), 0, 0, 0

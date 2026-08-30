@@ -19,7 +19,7 @@ export function BookCard({ book, onPress }: Props) {
   };
 
   const status = getStatus();
-  const price = book.discountedPrice > 0 ? book.discountedPrice : book.actualPrice;
+  const price = book.discountedPrice;
 
   return (
     <Card style={styles.card} onPress={onPress} mode="elevated">

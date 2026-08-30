@@ -95,13 +95,16 @@ export default function EditBookScreen() {
         }
       }
 
+      const printed = parseFloat(actualPrice) || 0;
+      // Discounted price is the source of truth. If left blank, fall back to printed price.
+      const discounted = parseFloat(discountedPrice) || printed;
       await editBook({
         ...book,
         title: title.trim(),
         author: author.trim(),
         publication: publication.trim(),
-        actualPrice: parseFloat(actualPrice) || 0,
-        discountedPrice: parseFloat(discountedPrice) || 0,
+        actualPrice: printed,
+        discountedPrice: discounted,
         purchasedDate,
         readingStartDate,
         completionDate,

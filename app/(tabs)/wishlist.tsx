@@ -50,11 +50,14 @@ export default function WishlistScreen() {
 
   const confirmPurchase = async () => {
     if (!purchaseItem || !purchasedDate) return;
+    const printed = parseFloat(actualPrice) || 0;
+    // Discounted price is the source of truth. If left blank, fall back to printed price.
+    const discounted = parseFloat(discountedPrice) || printed;
     await moveToPurchased(
       purchaseItem.id,
       purchasedDate,
-      parseFloat(actualPrice) || 0,
-      parseFloat(discountedPrice) || 0
+      printed,
+      discounted
     );
     setPurchaseItem(null);
     refresh();
