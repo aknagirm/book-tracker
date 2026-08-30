@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const COVERS_DIR = `${FileSystem.documentDirectory}covers/`;
 
@@ -14,9 +14,13 @@ async function ensureCoversDir(): Promise<void> {
 
 /**
  * Copy an image from a temporary URI to permanent app storage.
- * Returns the permanent URI, or null if the source is invalid.
+ * Returns the permanent URI. Throws if the copy fails.
  */
 export async function saveImagePermanently(tempUri: string): Promise<string> {
+  if (!FileSystem.documentDirectory) {
+    throw new Error('documentDirectory is not available');
+  }
+
   await ensureCoversDir();
 
   const fileName = `cover_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
@@ -26,6 +30,12 @@ export async function saveImagePermanently(tempUri: string): Promise<string> {
     from: tempUri,
     to: permanentUri,
   });
+
+  // Verify the copy succeeded
+  const info = await FileSystem.getInfoAsync(permanentUri);
+  if (!info.exists) {
+    throw new Error('Failed to copy image to permanent storage');
+  }
 
   return permanentUri;
 }

@@ -89,6 +89,9 @@ export default function AddBookScreen() {
           permanentCoverUri = await saveImagePermanently(coverUri);
         } catch (e) {
           console.error('Error saving cover image:', e);
+          // Fall back to the original URI so the reference isn't lost
+          permanentCoverUri = coverUri;
+          Alert.alert('Cover Warning', 'Could not save the cover permanently. It may not persist.');
         }
       }
 
